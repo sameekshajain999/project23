@@ -1,0 +1,6 @@
+{
+  "name": "AyushSetu",
+  "description": "National Academia-Industry Collaboration Platform for Skill Mapping, Internships, and Placement under the Ministry of Ayush / All India Institute of Ayurveda (AIIA).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

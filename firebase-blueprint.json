@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role-based access control (Student, Industry Recruiter, Academic Faculty/TPO).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User full name" },
+        "role": {
+          "type": "string",
+          "enum": ["student", "industry", "faculty", "admin"],
+          "description": "User role: student, industry recruiter, or academic faculty/TPO"
+        },
+        "organization": { "type": "string", "description": "Institute or enterprise name" },
+        "phone": { "type": "string", "description": "Contact telephone number" },
+        "resumeUrl": { "type": "string", "description": "Uploaded resume URL or reference" },
+        "createdAt": { "type": "string", "description": "Account registration timestamp" },
+        "updatedAt": { "type": "string", "description": "Last profile update timestamp" }
+      },
+      "required": ["uid", "email", "role", "displayName"]
+    },
+    "AppointmentBooking": {
+      "title": "AppointmentBooking",
+      "description": "Mentorship or faculty consultation appointment booking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Booking document ID" },
+        "userId": { "type": "string", "description": "UID of the student booking the appointment" },
+        "userName": { "type": "string", "description": "Name of the student" },
+        "facultyName": { "type": "string", "description": "Faculty mentor or guide name" },
+        "department": { "type": "string", "description": "Clinical or research department" },
+        "date": { "type": "string", "description": "Date of appointment" },
+        "timeSlot": { "type": "string", "description": "Selected time slot" },
+        "purpose": { "type": "string", "description": "Clinical or academic purpose" },
+        "status": {
+          "type": "string",
+          "enum": ["Pending", "Confirmed", "Completed"],
+          "description": "Appointment status"
+        },
+        "createdAt": { "type": "string", "description": "Booking timestamp" }
+      },
+      "required": ["id", "userId", "userName", "facultyName", "date"]
+    },
+    "Application": {
+      "title": "Application",
+      "description": "Student internship or fellowship application submission.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Application document ID" },
+        "jobId": { "type": "string", "description": "Target job posting ID" },
+        "jobTitle": { "type": "string", "description": "Title of the job posting" },
+        "organization": { "type": "string", "description": "Recruiting organization" },
+        "studentId": { "type": "string", "description": "Applicant student ID or UID" },
+        "studentName": { "type": "string", "description": "Applicant student name" },
+        "studentEmail": { "type": "string", "description": "Applicant student email" },
+        "matchScore": { "type": "number", "description": "Skill fit percentage" },
+        "status": { "type": "string", "description": "Application pipeline status" },
+        "appliedDate": { "type": "string", "description": "Application timestamp" }
+      },
+      "required": ["id", "jobId", "studentId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection of user accounts keyed by Firebase Auth UID"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "AppointmentBooking",
+      "description": "Collection of faculty mentorship consultations"
+    },
+    "/applications/{applicationId}": {
+      "schema": "Application",
+      "description": "Collection of submitted job & internship applications"
+    }
+  }
+}
