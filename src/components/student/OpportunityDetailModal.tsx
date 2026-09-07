@@ -47,7 +47,10 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
         opportunity.id,
         opportunity.title,
         opportunity.organization,
-        opportunity.matchScore
+        opportunity.matchScore,
+        opportunity.stipend,
+        opportunity.location,
+        opportunity.workMode
       );
       setHasApplied(true);
       if (onApplySuccess) onApplySuccess(opportunity.id);

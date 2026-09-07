@@ -15,6 +15,7 @@ import {
   addDoc,
   collection,
   serverTimestamp,
+  onSnapshot,
 } from 'firebase/firestore';
 import {
   auth,
@@ -23,7 +24,8 @@ import {
   handleFirestoreError,
   OperationType,
 } from '../lib/firebase';
-import { UserRole } from '../types';
+import { UserRole, ApplicationRecord, AppointmentRecord } from '../types';
+import { INITIAL_APPLICATIONS, INITIAL_APPOINTMENTS } from '../data/mockData';
 
 export interface UserProfileDoc {
   uid: string;
@@ -55,6 +57,8 @@ interface AuthContextType {
   signInWithGoogle: (preferredRole?: UserRole) => Promise<void>;
   signOutUser: () => Promise<void>;
   requireAuth: (actionDescription: string, requiredRole?: UserRole) => boolean;
+  applications: ApplicationRecord[];
+  appointments: AppointmentRecord[];
   bookAppointment: (
     facultyName: string,
     department: string,
@@ -66,7 +70,10 @@ interface AuthContextType {
     jobId: string,
     jobTitle: string,
     organization: string,
-    matchScore: number
+    matchScore: number,
+    stipend?: string,
+    location?: string,
+    workMode?: string
   ) => Promise<string>;
   uploadResume: (fileName: string) => Promise<string>;
 }
@@ -77,6 +84,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfileDoc | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Applications and Appointments real-time state with persistent local cache
+  const [applications, setApplications] = useState<ApplicationRecord[]>(() => {
+    try {
+      const cached = localStorage.getItem('ayushsetu_applications');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_APPLICATIONS;
+  });
+
+  const [appointments, setAppointments] = useState<AppointmentRecord[]>(() => {
+    try {
+      const cached = localStorage.getItem('ayushsetu_appointments');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_APPOINTMENTS;
+  });
 
   // Auth gating modal state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -177,6 +207,109 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => unsubscribe();
   }, []);
+
+  // Real-time Firestore Sync (onSnapshot) for Applications & Appointments
+  useEffect(() => {
+    let unsubscribeApps = () => {};
+    let unsubscribeAppts = () => {};
+
+    try {
+      // 1. Applications collection listener
+      const appsCollectionRef = collection(db, 'applications');
+      unsubscribeApps = onSnapshot(
+        appsCollectionRef,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const firestoreApps: ApplicationRecord[] = [];
+            snapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              firestoreApps.push({
+                id: docSnap.id,
+                studentId: data.studentId || 'STU-AIIA-2024-89',
+                studentName: data.studentName || 'Dr. Ananya Sharma',
+                studentEmail: data.studentEmail,
+                jobId: data.jobId,
+                jobTitle: data.jobTitle,
+                organization: data.organization,
+                matchScore: data.matchScore || 90,
+                status: data.status || 'Applied',
+                appliedDate: data.appliedDate || new Date().toISOString().split('T')[0],
+                stipend: data.stipend,
+                location: data.location,
+                workMode: data.workMode,
+                notes: data.notes,
+              });
+            });
+
+            setApplications((prev) => {
+              const combinedMap = new Map<string, ApplicationRecord>();
+              // Keep default/initial so initial experience isn't stripped
+              INITIAL_APPLICATIONS.forEach((a) => combinedMap.set(a.jobId, a));
+              prev.forEach((a) => combinedMap.set(a.jobId, a));
+              firestoreApps.forEach((a) => combinedMap.set(a.jobId, a));
+              const merged = Array.from(combinedMap.values());
+              try {
+                localStorage.setItem('ayushsetu_applications', JSON.stringify(merged));
+              } catch (e) {}
+              return merged;
+            });
+          }
+        },
+        (error) => {
+          console.warn('Applications real-time sync notice (using persistent local cache):', error.message);
+        }
+      );
+
+      // 2. Appointments collection listener
+      const apptsCollectionRef = collection(db, 'appointments');
+      unsubscribeAppts = onSnapshot(
+        apptsCollectionRef,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const firestoreAppts: AppointmentRecord[] = [];
+            snapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              firestoreAppts.push({
+                id: docSnap.id,
+                userId: data.userId || 'STU-AIIA-2024-89',
+                userName: data.userName || 'Dr. Ananya Sharma',
+                userEmail: data.userEmail,
+                facultyName: data.facultyName,
+                department: data.department,
+                date: data.date,
+                timeSlot: data.timeSlot,
+                purpose: data.purpose,
+                status: data.status || 'Confirmed',
+                createdAt: data.createdAt || new Date().toISOString(),
+              });
+            });
+
+            setAppointments((prev) => {
+              const combinedMap = new Map<string, AppointmentRecord>();
+              INITIAL_APPOINTMENTS.forEach((a) => combinedMap.set(a.id, a));
+              prev.forEach((a) => combinedMap.set(a.id, a));
+              firestoreAppts.forEach((a) => combinedMap.set(a.id, a));
+              const merged = Array.from(combinedMap.values());
+              try {
+                localStorage.setItem('ayushsetu_appointments', JSON.stringify(merged));
+              } catch (e) {}
+              return merged;
+            });
+          }
+        },
+        (error) => {
+          console.warn('Appointments real-time sync notice (using persistent local cache):', error.message);
+        }
+      );
+    } catch (err) {
+      console.warn('Failed initializing Firestore onSnapshot listeners:', err);
+    }
+
+    return () => {
+      unsubscribeApps();
+      unsubscribeAppts();
+    };
+  }, [user]);
 
   // Sign in with email and password
   const signInWithEmail = async (email: string, pass: string) => {
@@ -392,7 +525,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
-  // Requirement 3: Book Appointment
+  // Requirement 3 & 4: Book Appointment with Real-time & Local Persistence
   const bookAppointment = async (
     facultyName: string,
     department: string,
@@ -407,32 +540,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const bookingData = {
       userId: user.uid,
-      userName: userProfile?.displayName || user.displayName || user.email || 'Student',
-      userEmail: user.email,
+      userName: userProfile?.displayName || user.displayName || user.email || 'Dr. Ananya Sharma',
+      userEmail: user.email || 'ananya.sharma@aiia.gov.in',
       facultyName,
       department,
       date,
       timeSlot,
       purpose,
-      status: 'Confirmed',
+      status: 'Confirmed' as const,
       createdAt: new Date().toISOString(),
     };
+
+    const localId = `APT-${Date.now().toString().slice(-4)}`;
+    const newRecord: AppointmentRecord = {
+      id: localId,
+      ...bookingData,
+    };
+
+    // Immediate state & local storage update
+    setAppointments((prev) => {
+      const updated = [newRecord, ...prev];
+      try {
+        localStorage.setItem('ayushsetu_appointments', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
 
     try {
       const docRef = await addDoc(collection(db, 'appointments'), bookingData);
       return docRef.id;
     } catch (err) {
       console.warn('Booking stored locally with fallback:', err);
-      return `app-${Date.now()}`;
+      return localId;
     }
   };
 
-  // Requirement 3: Submit Internship Application ("Apply Now")
+  // Requirement 3 & 4: Submit Internship Application ("Apply Now") with Real-time & Local Persistence
   const submitApplication = async (
     jobId: string,
     jobTitle: string,
     organization: string,
-    matchScore: number
+    matchScore: number,
+    stipend?: string,
+    location?: string,
+    workMode?: string
   ): Promise<string> => {
     if (!user) {
       openAuthModal('Please sign in or register to submit your verified internship application');
@@ -441,22 +592,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const appData = {
       studentId: user.uid,
-      studentName: userProfile?.displayName || user.displayName || 'Ayush Scholar',
-      studentEmail: user.email,
+      studentName: userProfile?.displayName || user.displayName || 'Dr. Ananya Sharma',
+      studentEmail: user.email || 'ananya.sharma@aiia.gov.in',
       jobId,
       jobTitle,
       organization,
       matchScore,
-      status: 'Applied',
-      appliedDate: new Date().toISOString(),
+      stipend: stipend || '₹38,000 / month + Lab Allowances',
+      location: location || 'Sarita Vihar, New Delhi',
+      workMode: workMode || 'On-site',
+      status: 'Applied' as const,
+      appliedDate: new Date().toISOString().split('T')[0],
+      notes: 'Application registered in Ministry National Internship Portal',
     };
+
+    const localId = `APP-${Date.now().toString().slice(-4)}`;
+    const newRecord: ApplicationRecord = {
+      id: localId,
+      ...appData,
+    };
+
+    // Immediate state & local storage update
+    setApplications((prev) => {
+      const updated = [newRecord, ...prev.filter((p) => p.jobId !== jobId)];
+      try {
+        localStorage.setItem('ayushsetu_applications', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
 
     try {
       const docRef = await addDoc(collection(db, 'applications'), appData);
       return docRef.id;
     } catch (err) {
       console.warn('Application submitted with local confirmation fallback:', err);
-      return `app-${Date.now()}`;
+      return localId;
     }
   };
 
@@ -498,6 +668,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithGoogle,
         signOutUser,
         requireAuth,
+        applications,
+        appointments,
         bookAppointment,
         submitApplication,
         uploadResume,

@@ -7,6 +7,8 @@ import { OpportunityBoard } from './OpportunityBoard';
 import { DailyLogbook } from './DailyLogbook';
 import { OpportunityDetailModal } from './OpportunityDetailModal';
 import { BookAppointmentModal } from './BookAppointmentModal';
+import { MyApplicationsDrawer } from './MyApplicationsDrawer';
+import { useAuth } from '../../context/AuthContext';
 import {
   Sparkles,
   Compass,
@@ -46,8 +48,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   selectedSection = 'all',
   onSelectSection,
 }) => {
+  const { applications } = useAuth();
   const [selectedOpportunity, setSelectedOpportunity] = useState<JobPosting | null>(null);
   const [isBookAppointmentOpen, setIsBookAppointmentOpen] = useState(false);
+  const [isMyApplicationsOpen, setIsMyApplicationsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'skills' | 'opportunities' | 'logbook'>(
     (selectedSection as any) || 'all'
   );
@@ -181,7 +185,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       </div>
 
       {/* Student Hero & Verified Credentials */}
-      <StudentHero student={student} />
+      <StudentHero
+        student={student}
+        onOpenMyApplications={() => setIsMyApplicationsOpen(true)}
+        applicationsCount={applications.length}
+      />
 
       {/* High Density Promotional Announcement Banner + Faculty Mentorship Widget */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -258,14 +266,29 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               <span className="text-[11px] text-slate-500 font-medium">Clinical Department:</span>
               <span className="font-medium text-slate-700">Kayachikitsa (AIIA)</span>
             </div>
-            <button
-              id="book-appointment-btn"
-              onClick={() => setIsBookAppointmentOpen(true)}
-              className="mt-2.5 w-full py-2 px-3 bg-[#1B4D3E] hover:bg-[#153e32] text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer"
-            >
-              <CalendarCheck className="w-3.5 h-3.5 text-amber-300" />
-              <span>Book Appointment</span>
-            </button>
+            <div className="flex items-center gap-2 mt-2.5">
+              <button
+                id="book-appointment-btn"
+                onClick={() => setIsBookAppointmentOpen(true)}
+                className="flex-1 py-2 px-3 bg-[#1B4D3E] hover:bg-[#153e32] text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer"
+              >
+                <CalendarCheck className="w-3.5 h-3.5 text-amber-300" />
+                <span>Book Appointment</span>
+              </button>
+
+              <button
+                id="my-applications-mentorship-btn"
+                onClick={() => setIsMyApplicationsOpen(true)}
+                className="py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer"
+                title="View your submitted job applications"
+              >
+                <Briefcase className="w-3.5 h-3.5 text-amber-700" />
+                <span>Applications</span>
+                <span className="text-[10px] bg-amber-200 px-1.5 py-0.2 rounded-full font-mono font-bold">
+                  {applications.length}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -326,6 +349,20 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             <FileText className="w-3.5 h-3.5" />
             <span>Daily Logbook ({logbookEntries.length})</span>
           </button>
+
+          {/* Quick Action: My Applications */}
+          <button
+            id="my-applications-anchor-btn"
+            onClick={() => setIsMyApplicationsOpen(true)}
+            className="px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5 cursor-pointer text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 font-bold"
+            title="Open submitted applications tracker"
+          >
+            <Briefcase className="w-3.5 h-3.5 text-amber-700" />
+            <span>My Applications</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-200 font-mono font-black">
+              {applications.length}
+            </span>
+          </button>
         </div>
 
         <div className="hidden md:flex items-center text-slate-400 text-[11px] pr-2">
@@ -374,6 +411,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       <BookAppointmentModal
         isOpen={isBookAppointmentOpen}
         onClose={() => setIsBookAppointmentOpen(false)}
+      />
+
+      {/* My Applications Drawer */}
+      <MyApplicationsDrawer
+        isOpen={isMyApplicationsOpen}
+        onClose={() => setIsMyApplicationsOpen(false)}
+        applications={applications}
+        onExploreOpportunities={() => {
+          handleTabClick('opportunities');
+          scrollToSection('opportunity-board-section');
+        }}
       />
     </div>
   );

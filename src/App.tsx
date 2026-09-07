@@ -20,18 +20,39 @@ import { AdminPortal } from './components/admin/AdminPortal';
 import { ShieldCheck, HeartHandshake, Phone, Mail, Globe, Award, Sparkles } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
+import { AiChatbot } from './components/chat/AiChatbot';
 
 function AyushSetuContent() {
-  const { userProfile } = useAuth();
+  const { userProfile, applications } = useAuth();
   // Active Role state: default to 'student'
   const [currentRole, setCurrentRole] = useState<UserRole>('student');
 
-  // Application Data States (Interactive)
+  // Application Data States (Interactive with Persistent Local Resilience)
   const [student, setStudent] = useState(CURRENT_STUDENT);
   const [skills, setSkills] = useState(SKILL_GAP_DATA);
   const [courses, setCourses] = useState(UPSKILLING_RECOMMENDATIONS);
-  const [opportunities, setOpportunities] = useState<JobPosting[]>(INITIAL_JOB_POSTINGS);
-  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>(INITIAL_LOGBOOK_ENTRIES);
+  const [opportunities, setOpportunities] = useState<JobPosting[]>(() => {
+    try {
+      const cached = localStorage.getItem('ayushsetu_opportunities');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_JOB_POSTINGS;
+  });
+
+  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>(() => {
+    try {
+      const cached = localStorage.getItem('ayushsetu_logbook_entries');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_LOGBOOK_ENTRIES;
+  });
+
   const [candidates, setCandidates] = useState<KanbanCandidate[]>(KANBAN_APPLICANTS);
   const [mouCollaborations] = useState(MOU_COLLABORATIONS);
   const [divergenceData] = useState(CURRICULUM_DIVERGENCE_DATA);
@@ -43,20 +64,54 @@ function AyushSetuContent() {
     }
   }, [userProfile?.role]);
 
+  // Synchronize applied status on opportunities from real-time applications
+  React.useEffect(() => {
+    if (applications && applications.length > 0) {
+      const appliedJobIds = new Set(applications.map((a) => a.jobId));
+      setOpportunities((prev) => {
+        let changed = false;
+        const updated = prev.map((job) => {
+          if (appliedJobIds.has(job.id) && !job.applied) {
+            changed = true;
+            return { ...job, applied: true };
+          }
+          return job;
+        });
+        if (changed) {
+          try {
+            localStorage.setItem('ayushsetu_opportunities', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        }
+        return prev;
+      });
+    }
+  }, [applications]);
+
   // Search Modal state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('all');
 
-  // Handlers
+  // Handlers with persistent local storage caching
   const handleAddLogbookEntry = (newEntry: LogbookEntry) => {
-    setLogbookEntries((prev) => [newEntry, ...prev]);
+    setLogbookEntries((prev) => {
+      const updated = [newEntry, ...prev];
+      try {
+        localStorage.setItem('ayushsetu_logbook_entries', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const handleApplyOpportunity = (jobId: string) => {
-    setOpportunities((prev) =>
-      prev.map((job) => (job.id === jobId ? { ...job, applied: true } : job))
-    );
+    setOpportunities((prev) => {
+      const updated = prev.map((job) => (job.id === jobId ? { ...job, applied: true } : job));
+      try {
+        localStorage.setItem('ayushsetu_opportunities', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const handleUpdateCandidateStage = (
@@ -69,7 +124,13 @@ function AyushSetuContent() {
   };
 
   const handlePostNewOpportunity = (newJob: JobPosting) => {
-    setOpportunities((prev) => [newJob, ...prev]);
+    setOpportunities((prev) => {
+      const updated = [newJob, ...prev];
+      try {
+        localStorage.setItem('ayushsetu_opportunities', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const handleUpdateLogbookStatus = (
@@ -274,6 +335,9 @@ function AyushSetuContent() {
 
       {/* Global Firebase Auth Modal */}
       <AuthModal />
+
+      {/* Floating AI Chatbot Widget (Gemini-powered Ayush Career Advisor) */}
+      <AiChatbot />
     </div>
   );
 }

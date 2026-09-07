@@ -29,6 +29,8 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
 }) => {
   const { requireAuth } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  type RoleTypeFilter = 'All' | 'Internship' | 'Fellowship' | 'Full-time';
+  const [selectedRoleType, setSelectedRoleType] = useState<RoleTypeFilter>('All');
   const [selectedOrgType, setSelectedOrgType] = useState('All');
   const [selectedWorkMode, setSelectedWorkMode] = useState('All');
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(
@@ -41,6 +43,25 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
+
+  const rolePillFilters: { id: RoleTypeFilter; label: string; count: number }[] = [
+    { id: 'All', label: 'All', count: opportunities.length },
+    {
+      id: 'Internship',
+      label: 'Internships',
+      count: opportunities.filter((o) => o.type === 'Internship').length,
+    },
+    {
+      id: 'Fellowship',
+      label: 'Fellowships',
+      count: opportunities.filter((o) => o.type === 'Fellowship').length,
+    },
+    {
+      id: 'Full-time',
+      label: 'Full-Time Placements',
+      count: opportunities.filter((o) => o.type === 'Full-time').length,
+    },
+  ];
 
   const orgTypes = [
     'All',
@@ -60,10 +81,11 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
       item.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.requiredSkills.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    const matchesRoleType = selectedRoleType === 'All' || item.type === selectedRoleType;
     const matchesOrg = selectedOrgType === 'All' || item.orgType === selectedOrgType;
     const matchesMode = selectedWorkMode === 'All' || item.workMode === selectedWorkMode;
 
-    return matchesQuery && matchesOrg && matchesMode;
+    return matchesQuery && matchesRoleType && matchesOrg && matchesMode;
   });
 
   return (
@@ -90,6 +112,40 @@ export const OpportunityBoard: React.FC<OpportunityBoardProps> = ({
         {/* Quick count indicator */}
         <div className="text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
           Showing <span className="font-bold text-emerald-800">{filteredList.length}</span> verified postings
+        </div>
+      </div>
+
+      {/* Quick Role Type Pill Filters directly above search bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-bold text-slate-600 mr-1 flex items-center">
+          <Filter className="w-3.5 h-3.5 mr-1 text-[#1B4D3E]" />
+          Role Type:
+        </span>
+        <div className="inline-flex flex-wrap gap-2">
+          {rolePillFilters.map((pill) => {
+            const isActive = selectedRoleType === pill.id;
+            return (
+              <button
+                key={pill.id}
+                id={`filter-pill-${pill.id.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                onClick={() => setSelectedRoleType(pill.id)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  isActive
+                    ? 'bg-[#1B4D3E] text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80'
+                }`}
+              >
+                <span>{pill.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-semibold ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {pill.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

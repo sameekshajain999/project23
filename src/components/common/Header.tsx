@@ -107,28 +107,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
-      {/* Government of India Official Top Ribbon */}
-      <div className="bg-[#1B4D3E] text-slate-100 text-xs py-1.5 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <span className="inline-flex items-center space-x-1.5 font-medium tracking-wide">
-              <span className="w-2 h-2 rounded-full bg-amber-400 inline-block animate-pulse"></span>
-              <span className="hidden sm:inline">आयुष मंत्रालय |</span> Ministry of Ayush, Government of India
-            </span>
-            <span className="text-emerald-300 hidden md:inline">•</span>
-            <span className="hidden md:inline text-slate-200 font-medium">
-              All India Institute of Ayurveda (AIIA), New Delhi
-            </span>
-          </div>
-          <div className="flex items-center space-x-4 text-[11px]">
-            <span className="hidden lg:inline bg-[#13382D] text-emerald-300 px-2 py-0.5 rounded border border-emerald-600/30">
-              National Portal v2.4 (Production)
-            </span>
-            <span className="text-slate-300">Toll-free: 1800-11-AYUSH</span>
-          </div>
-        </div>
-      </div>
-
       {/* Main High-Density Navigation Bar */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3">
         <div className="flex items-center justify-between gap-3">

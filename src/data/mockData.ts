@@ -7,6 +7,8 @@ import {
   KanbanCandidate,
   MoUCollaboration,
   CurriculumDivergence,
+  ApplicationRecord,
+  AppointmentRecord,
 } from '../types';
 
 export const CURRENT_STUDENT: StudentProfile = {
@@ -213,6 +215,7 @@ export const INITIAL_JOB_POSTINGS: JobPosting[] = [
     ],
     eligibility: 'Final Year BAMS or MD (Ayu) Dravyaguna/Rasashastra/Bhaishajya Kalpana. Minimum CGPA 7.5.',
     isBookmarked: true,
+    applied: true,
   },
   {
     id: 'JOB-02',
@@ -238,6 +241,7 @@ export const INITIAL_JOB_POSTINGS: JobPosting[] = [
     ],
     eligibility: 'BAMS graduates or Final Year Interns with verified GCP-AYUSH badge.',
     isBookmarked: false,
+    applied: true,
   },
   {
     id: 'JOB-03',
@@ -663,3 +667,54 @@ export const ADMIN_ANALYTICS = {
     { state: 'Rajasthan', colleges: 19, students: 4600, placement: 85 },
   ],
 };
+
+export const INITIAL_APPLICATIONS: ApplicationRecord[] = [
+  {
+    id: 'APP-2026-001',
+    studentId: 'STU-AIIA-2024-89',
+    studentName: 'Dr. Ananya Sharma',
+    studentEmail: 'ananya.sharma@aiia.gov.in',
+    jobId: 'JOB-01',
+    jobTitle: 'R&D Formulation Research Fellow (Ayurvedic Dosage Forms)',
+    organization: 'Dabur Research & Development Centre (DRDC)',
+    matchScore: 94,
+    status: 'Shortlisted',
+    appliedDate: '2026-03-01',
+    stipend: '₹38,000 / month + Lab Allowances',
+    location: 'Ghaziabad, NCR / Hybrid',
+    workMode: 'Hybrid',
+    notes: 'Technical screening passed; in-person formulation lab round scheduled.',
+  },
+  {
+    id: 'APP-2026-002',
+    studentId: 'STU-AIIA-2024-89',
+    studentName: 'Dr. Ananya Sharma',
+    studentEmail: 'ananya.sharma@aiia.gov.in',
+    jobId: 'JOB-02',
+    jobTitle: 'Clinical Trial Coordinator - Integrative Oncology Protocol',
+    organization: 'All India Institute of Ayurveda (AIIA) - Clinical Trial Unit',
+    matchScore: 91,
+    status: 'Under Review',
+    appliedDate: '2026-03-04',
+    stipend: '₹42,000 / month (Ministry of Ayush Stride Grant)',
+    location: 'Sarita Vihar, New Delhi',
+    workMode: 'On-site',
+    notes: 'Awaiting Ethics Committee trial credential verification.',
+  },
+];
+
+export const INITIAL_APPOINTMENTS: AppointmentRecord[] = [
+  {
+    id: 'APT-2026-01',
+    userId: 'STU-AIIA-2024-89',
+    userName: 'Dr. Ananya Sharma',
+    userEmail: 'ananya.sharma@aiia.gov.in',
+    facultyName: 'Prof. Ramakrishna Vashishta',
+    department: 'Dept. of Kayachikitsa (Internal Medicine)',
+    date: '2026-04-10',
+    timeSlot: '03:30 PM - 04:30 PM',
+    purpose: 'Clinical Residency & Logbook Sign-off Review',
+    status: 'Confirmed',
+    createdAt: '2026-03-02T10:30:00.000Z',
+  },
+];

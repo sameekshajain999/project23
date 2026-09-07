@@ -128,3 +128,34 @@ export interface CurriculumDivergence {
   divergenceLevel: 'High Divergence' | 'Moderate Divergence' | 'Aligned';
   suggestedAdditions: string[];
 }
+
+export interface ApplicationRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentEmail?: string;
+  jobId: string;
+  jobTitle: string;
+  organization: string;
+  matchScore: number;
+  status: 'Applied' | 'Under Review' | 'Shortlisted' | 'Interview Scheduled' | 'Offered' | 'Rejected';
+  appliedDate: string;
+  stipend?: string;
+  location?: string;
+  workMode?: string;
+  notes?: string;
+}
+
+export interface AppointmentRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  facultyName: string;
+  department: string;
+  date: string;
+  timeSlot: string;
+  purpose: string;
+  status: 'Confirmed' | 'Completed' | 'Cancelled' | 'Rescheduled';
+  createdAt: string;
+}
